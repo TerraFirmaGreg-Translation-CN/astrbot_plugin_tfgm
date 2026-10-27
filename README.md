@@ -1,6 +1,6 @@
 # astrbot_plugin_tfgm
 
-TerraFirmaGreg 中文社区的 AstrBot 插件，目前为初始骨架。
+TerraFirmaGreg 中文社区的 AstrBot 插件，提供社区信息和查服指令。
 
 ## 使用
 
@@ -10,7 +10,10 @@ TerraFirmaGreg 中文社区的 AstrBot 插件，目前为初始骨架。
 https://github.com/TerraFirmaGreg-Translation-CN/astrbot_plugin_tfgm
 ```
 
-发送 `/tfgm` 查看社区 GitHub 地址。当前没有额外配置或第三方依赖。
+- 通过 NapCat（OneBot v11）发送 `查服`，固定回复：`群峦格雷欢迎你`。无需 @ 机器人，只匹配完整指令（忽略首尾空白）。
+- 发送 `/tfgm` 查看社区 GitHub 地址。
+
+当前没有额外配置或第三方依赖。
 
 ## 开发
 
