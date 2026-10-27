@@ -1,0 +1,6 @@
+name: astrbot_plugin_tfgm
+display_name: TFGM 中文社区
+desc: TerraFirmaGreg 中文社区 AstrBot 插件，提供社区信息查询指令。
+version: v0.1.0
+author: TerraFirmaGreg-Translation-CN
+repo: https://github.com/TerraFirmaGreg-Translation-CN/astrbot_plugin_tfgm
