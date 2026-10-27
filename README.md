@@ -15,6 +15,16 @@ https://github.com/TerraFirmaGreg-Translation-CN/astrbot_plugin_tfgm
 
 当前没有额外配置或第三方依赖。
 
+## ZIP 安装包
+
+推送到 `main`、推送 `v*` 标签或手动运行工作流时，GitHub Actions 会自动打包。
+
+1. 打开仓库 [Actions](https://github.com/TerraFirmaGreg-Translation-CN/astrbot_plugin_tfgm/actions/workflows/package.yml)，选择成功的 `Package plugin` 运行。
+2. 在 Artifacts 中下载 `astrbot_plugin_tfgm.zip`（需要登录 GitHub，保留 90 天）。
+3. 在 AstrBot 插件管理中选择本地 ZIP 安装，直接上传下载的文件，无需解压。
+
+ZIP 内含插件目录、入口、元数据、说明和许可证，不包含 GitHub 工作流。也可以在 Actions 页面点击 `Run workflow` 手动生成。
+
 ## 开发
 
 将本仓库放入 AstrBot 的 `data/plugins/astrbot_plugin_tfgm` 目录，启动 AstrBot 后通过插件管理页面重载插件。

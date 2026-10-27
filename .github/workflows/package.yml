@@ -1,0 +1,29 @@
+name: Package plugin
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build installable ZIP
+        run: |
+          python3 -m py_compile main.py
+          mkdir -p dist
+          git archive --format=zip --prefix=astrbot_plugin_tfgm/ --output=dist/astrbot_plugin_tfgm.zip HEAD
+          unzip -t dist/astrbot_plugin_tfgm.zip
+      - name: Upload installable ZIP
+        uses: actions/upload-artifact@v7
+        with:
+          path: dist/astrbot_plugin_tfgm.zip
+          archive: false
+          if-no-files-found: error
+          retention-days: 90
