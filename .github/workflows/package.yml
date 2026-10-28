@@ -74,8 +74,9 @@ jobs:
       - name: Upload installable ZIP
         uses: actions/upload-artifact@v7
         with:
+          name: plugin-package
           path: dist/astrbot_plugin_tfgm.zip
-          archive: false
+          archive: true
           if-no-files-found: error
           retention-days: 90
 
@@ -91,8 +92,12 @@ jobs:
     steps:
       - uses: actions/download-artifact@v8
         with:
-          name: astrbot_plugin_tfgm.zip
+          name: plugin-package
           path: dist
+      - name: Verify release asset
+        run: |
+          test -f dist/astrbot_plugin_tfgm.zip
+          unzip -t dist/astrbot_plugin_tfgm.zip
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
