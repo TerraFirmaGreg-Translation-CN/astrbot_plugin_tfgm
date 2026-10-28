@@ -1,0 +1,508 @@
+{
+  "enabled": {
+    "description": "启用群服互通与游戏 AI",
+    "type": "bool",
+    "default": false
+  },
+  "servers": {
+    "type": "template_list",
+    "description": "服务器",
+    "default": [],
+    "templates": {
+      "default": {
+        "name": "服务器",
+        "items": {
+          "enabled": {
+            "description": "启用服务器",
+            "type": "bool",
+            "default": true
+          },
+          "id": {
+            "description": "服务器唯一 ID",
+            "type": "string",
+            "default": "",
+            "hint": "使用字母、数字、下划线或短横线；修改会产生新的游标和会话。"
+          },
+          "name": {
+            "description": "服务器显示名称",
+            "type": "string",
+            "default": "生存服"
+          },
+          "url": {
+            "description": "Sidecar 基础地址",
+            "type": "string",
+            "default": "http://127.0.0.1:8765",
+            "hint": "容器内 localhost 指向容器自身。不要填写 /api/v1。"
+          },
+          "read_token": {
+            "description": "Sidecar 读取令牌 http.token",
+            "type": "string",
+            "default": "",
+            "secret": true
+          },
+          "message_token": {
+            "description": "Sidecar 消息令牌 messages.token",
+            "type": "string",
+            "default": "",
+            "secret": true
+          },
+          "ai_enabled": {
+            "description": "此服务器 AI 开关",
+            "type": "bool",
+            "default": true,
+            "hint": "还需开启全局 AI 开关。"
+          }
+        }
+      }
+    }
+  },
+  "routes": {
+    "type": "template_list",
+    "description": "群服路由",
+    "default": [],
+    "templates": {
+      "default": {
+        "name": "群服路由",
+        "items": {
+          "enabled": {
+            "description": "启用路由",
+            "type": "bool",
+            "default": true
+          },
+          "id": {
+            "description": "路由唯一 ID",
+            "type": "string",
+            "default": ""
+          },
+          "server_id": {
+            "description": "对应服务器 ID",
+            "type": "string",
+            "default": ""
+          },
+          "qq_origin": {
+            "description": "QQ 群会话标识 UMO",
+            "type": "string",
+            "default": "",
+            "hint": "在目标 QQ 群执行 /tfgm_origin 获取；包含平台实例 ID，不能只填群号。"
+          },
+          "mc_to_qq": {
+            "description": "游戏 → QQ",
+            "type": "bool",
+            "default": true
+          },
+          "qq_to_mc": {
+            "description": "QQ → 游戏",
+            "type": "bool",
+            "default": true
+          },
+          "mc_mode": {
+            "description": "游戏转发模式",
+            "type": "string",
+            "default": "all",
+            "options": [
+              "all",
+              "prefix"
+            ]
+          },
+          "qq_mode": {
+            "description": "QQ 转发模式",
+            "type": "string",
+            "default": "all",
+            "options": [
+              "all",
+              "prefix"
+            ]
+          },
+          "mc_prefix": {
+            "description": "游戏转发前缀",
+            "type": "string",
+            "default": "#qq "
+          },
+          "qq_prefix": {
+            "description": "QQ 转发前缀",
+            "type": "string",
+            "default": "#mc "
+          },
+          "strip_prefix": {
+            "description": "移除匹配的转发前缀",
+            "type": "bool",
+            "default": true
+          },
+          "mc_template": {
+            "description": "游戏 → QQ 格式",
+            "type": "string",
+            "default": "[{server}] {player}：{message}"
+          },
+          "qq_template": {
+            "description": "QQ → 游戏格式",
+            "type": "string",
+            "default": "[QQ群] {nickname}：{message}"
+          },
+          "mc_color": {
+            "description": "游戏中显示颜色",
+            "type": "string",
+            "default": "white",
+            "options": [
+              "white",
+              "gray",
+              "aqua",
+              "green",
+              "yellow",
+              "gold"
+            ]
+          },
+          "image_mode": {
+            "description": "图片处理",
+            "type": "string",
+            "default": "placeholder",
+            "options": [
+              "placeholder",
+              "link",
+              "ignore"
+            ]
+          },
+          "quote_chars": {
+            "description": "引用摘要最大字数",
+            "type": "int",
+            "default": 80,
+            "slider": {
+              "min": 0,
+              "max": 300,
+              "step": 1
+            }
+          },
+          "ignored_prefixes": {
+            "description": "不转发的命令前缀",
+            "type": "list",
+            "default": [
+              "/tfgm",
+              "tfgm_status",
+              "tfgm_origin"
+            ]
+          },
+          "ignored_qq": {
+            "description": "忽略的 QQ 号（含其他机器人）",
+            "type": "list",
+            "default": []
+          },
+          "allowed_qq": {
+            "description": "允许的 QQ 号（空为全部）",
+            "type": "list",
+            "default": []
+          },
+          "denied_players": {
+            "description": "忽略的玩家 UUID",
+            "type": "list",
+            "default": []
+          },
+          "allowed_players": {
+            "description": "允许的玩家 UUID（空为全部）",
+            "type": "list",
+            "default": []
+          },
+          "join_leave": {
+            "description": "转发玩家加入/退出",
+            "type": "bool",
+            "default": false
+          },
+          "death": {
+            "description": "转发玩家死亡",
+            "type": "bool",
+            "default": false
+          }
+        }
+      }
+    }
+  },
+  "connection": {
+    "type": "object",
+    "description": "连接与事件读取",
+    "items": {
+      "poll_seconds": {
+        "description": "聊天轮询间隔（秒）",
+        "type": "float",
+        "default": 1.0,
+        "slider": {
+          "min": 0.2,
+          "max": 60,
+          "step": 0.1
+        }
+      },
+      "batch_size": {
+        "description": "每页事件数量",
+        "type": "int",
+        "default": 200,
+        "slider": {
+          "min": 1,
+          "max": 1000,
+          "step": 1
+        }
+      },
+      "timeout_seconds": {
+        "description": "HTTP 超时（秒）",
+        "type": "float",
+        "default": 5.0,
+        "slider": {
+          "min": 4,
+          "max": 60,
+          "step": 0.1
+        }
+      },
+      "health_seconds": {
+        "description": "健康检查间隔（秒）",
+        "type": "int",
+        "default": 30,
+        "slider": {
+          "min": 5,
+          "max": 300,
+          "step": 1
+        }
+      },
+      "retry_seconds": {
+        "description": "最大重连退避（秒）",
+        "type": "int",
+        "default": 30,
+        "slider": {
+          "min": 1,
+          "max": 300,
+          "step": 1
+        }
+      },
+      "initial_history": {
+        "description": "首次连接读取历史",
+        "type": "bool",
+        "default": false,
+        "hint": "关闭时从当前游标开始；开启也仅补发有效期内消息。"
+      }
+    }
+  },
+  "delivery": {
+    "type": "object",
+    "description": "队列与消息投递",
+    "items": {
+      "queue_capacity": {
+        "description": "每目标待投递上限",
+        "type": "int",
+        "default": 200,
+        "slider": {
+          "min": 1,
+          "max": 2000,
+          "step": 1
+        }
+      },
+      "ttl_seconds": {
+        "description": "转发有效期（秒）",
+        "type": "int",
+        "default": 120,
+        "slider": {
+          "min": 10,
+          "max": 300,
+          "step": 1
+        }
+      },
+      "interval_seconds": {
+        "description": "同一目标发送间隔（秒）",
+        "type": "float",
+        "default": 1.0,
+        "slider": {
+          "min": 0,
+          "max": 30,
+          "step": 0.1
+        }
+      },
+      "chunk_chars": {
+        "description": "单段最大字数",
+        "type": "int",
+        "default": 300,
+        "slider": {
+          "min": 50,
+          "max": 1000,
+          "step": 1
+        }
+      },
+      "max_chunks": {
+        "description": "最多分段数",
+        "type": "int",
+        "default": 4,
+        "slider": {
+          "min": 1,
+          "max": 10,
+          "step": 1
+        }
+      },
+      "attempts": {
+        "description": "Sidecar 最大发送尝试次数",
+        "type": "int",
+        "default": 3,
+        "slider": {
+          "min": 1,
+          "max": 10,
+          "step": 1
+        }
+      },
+      "retention_hours": {
+        "description": "已完成记录保留小时数",
+        "type": "int",
+        "default": 24,
+        "slider": {
+          "min": 1,
+          "max": 168,
+          "step": 1
+        }
+      }
+    }
+  },
+  "ai": {
+    "type": "object",
+    "description": "游戏内 AI",
+    "items": {
+      "enabled": {
+        "description": "启用游戏内 AI",
+        "type": "bool",
+        "default": false
+      },
+      "prefix": {
+        "description": "唤醒前缀",
+        "type": "string",
+        "default": "@小助手 "
+      },
+      "provider_id": {
+        "description": "聊天模型（留空使用 AstrBot 当前默认模型）",
+        "type": "string",
+        "default": "",
+        "_special": "select_provider"
+      },
+      "persona_id": {
+        "description": "人格（留空只使用下方提示词）",
+        "type": "string",
+        "default": "",
+        "_special": "select_persona"
+      },
+      "system_prompt": {
+        "description": "游戏助手提示词",
+        "type": "text",
+        "default": "你是 TerraFirmaGreg 游戏助手。用简洁中文回答；不确定的配方和机制请明确说明，不要编造。"
+      },
+      "reply_scope": {
+        "description": "回复范围",
+        "type": "string",
+        "default": "player",
+        "options": [
+          "player",
+          "all"
+        ],
+        "hint": "仅回复提问者不代表问题私密：输入仍是公共聊天。"
+      },
+      "cooldown_seconds": {
+        "description": "同一玩家请求冷却（秒）",
+        "type": "int",
+        "default": 10,
+        "slider": {
+          "min": 0,
+          "max": 600,
+          "step": 1
+        }
+      },
+      "concurrency": {
+        "description": "每服 AI 并发数",
+        "type": "int",
+        "default": 2,
+        "slider": {
+          "min": 1,
+          "max": 8,
+          "step": 1
+        }
+      },
+      "timeout_seconds": {
+        "description": "AI 请求超时（秒）",
+        "type": "int",
+        "default": 90,
+        "slider": {
+          "min": 5,
+          "max": 300,
+          "step": 1
+        }
+      },
+      "history_turns": {
+        "description": "每位玩家保留对话轮数",
+        "type": "int",
+        "default": 10,
+        "slider": {
+          "min": 0,
+          "max": 50,
+          "step": 1
+        }
+      },
+      "history_hours": {
+        "description": "对话闲置过期小时数",
+        "type": "int",
+        "default": 24,
+        "slider": {
+          "min": 1,
+          "max": 168,
+          "step": 1
+        }
+      },
+      "max_input_chars": {
+        "description": "问题最大字数",
+        "type": "int",
+        "default": 2000,
+        "slider": {
+          "min": 100,
+          "max": 10000,
+          "step": 1
+        }
+      },
+      "max_reply_chars": {
+        "description": "回答最大字数",
+        "type": "int",
+        "default": 1200,
+        "slider": {
+          "min": 100,
+          "max": 10000,
+          "step": 1
+        }
+      },
+      "show_thinking": {
+        "description": "显示思考中提示",
+        "type": "bool",
+        "default": true
+      },
+      "thinking_text": {
+        "description": "思考中提示",
+        "type": "string",
+        "default": "[小助手] 思考中……"
+      },
+      "reply_prefix": {
+        "description": "回答前缀",
+        "type": "string",
+        "default": "[小助手] "
+      },
+      "reset_word": {
+        "description": "重置会话口令（接在唤醒前缀之后）",
+        "type": "string",
+        "default": "重置对话"
+      },
+      "forward_questions": {
+        "description": "将 AI 提问同时转发到绑定 QQ 群",
+        "type": "bool",
+        "default": false
+      },
+      "forward_replies": {
+        "description": "将 AI 回答同时转发到绑定 QQ 群",
+        "type": "bool",
+        "default": false
+      },
+      "allowed_players": {
+        "description": "允许使用 AI 的 UUID（空为全部）",
+        "type": "list",
+        "default": []
+      },
+      "denied_players": {
+        "description": "禁止使用 AI 的 UUID",
+        "type": "list",
+        "default": []
+      }
+    }
+  }
+}

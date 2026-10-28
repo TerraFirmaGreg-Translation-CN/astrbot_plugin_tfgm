@@ -1,25 +1,76 @@
-name: Package plugin
+name: Check, package and release plugin
 
 on:
   push:
     branches: [main]
     tags: ['v*']
+  pull_request:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: '发布已有版本标签（例如 v0.3.0）；留空只检查和打包'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
 
 jobs:
+  source:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+      release_tag: ${{ steps.source.outputs.release_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag && format('refs/tags/{0}', inputs.release_tag) || github.ref }}
+          persist-credentials: false
+      - name: Resolve source and validate release version
+        id: source
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag || (github.event_name == 'push' && github.ref_type == 'tag' && github.ref_name) || '' }}
+        run: |
+          if [ -n "$RELEASE_TAG" ]; then
+            python scripts/check_release.py "$RELEASE_TAG"
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+  check:
+    needs: source
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.10', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -r requirements.txt ruff
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: python -m unittest discover -s tests -v
+      - run: python scripts/generate_schema.py && git diff --exit-code -- _conf_schema.json docs/configuration.md
+
   package:
+    needs: [source, check]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Build installable ZIP
-        run: |
-          python3 -m py_compile main.py
-          mkdir -p dist
-          git archive --format=zip --prefix=astrbot_plugin_tfgm/ --output=dist/astrbot_plugin_tfgm.zip HEAD
-          unzip -t dist/astrbot_plugin_tfgm.zip
+        run: python scripts/package.py
       - name: Upload installable ZIP
         uses: actions/upload-artifact@v7
         with:
@@ -27,3 +78,33 @@ jobs:
           archive: false
           if-no-files-found: error
           retention-days: 90
+
+  release:
+    needs: [source, package]
+    if: needs.source.outputs.release_tag != '' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: plugin-release-${{ needs.source.outputs.release_tag }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: astrbot_plugin_tfgm.zip
+          path: dist
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.source.outputs.release_tag }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists; keeping existing assets unchanged."
+            exit 0
+          fi
+          args=(--verify-tag --generate-notes --title "TFGM 插件 $RELEASE_TAG")
+          if [[ "$RELEASE_TAG" == *-* ]]; then
+            args+=(--prerelease)
+          fi
+          gh release create "$RELEASE_TAG" dist/astrbot_plugin_tfgm.zip "${args[@]}"
